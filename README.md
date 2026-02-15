@@ -5,3 +5,5 @@ This project simulates CAR T-cell behavior and interactions with cancer cells in
 
 https://youtu.be/aqnypD7EC9U
 
+Seeing Free Neighbors:
+<img width="1296" height="647" alt="Screenshot 2026-02-15 at 2 06 53 PM" src="https://github.com/user-attachments/assets/d4f940cb-40ae-405f-a865-462cc5b1a244" />
