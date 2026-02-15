@@ -1,0 +1,186 @@
+breed [ts t]
+;;creates t-cells
+breed [cs c]
+;;creates c-cells
+
+globals [meeting-count]
+;global variables (meeting count which represents the amount of interactions cs and ts have)
+turtles-own [
+interaction-count-ts
+  ;;the amount of interactions t-cells have (blue cells have)
+interaction-count-cs
+  ;;the amount of interactions c-cells have (red cells have)
+c-ns
+  ;;measures the amount of neighbors that are cancer cells specifically
+  ;;uses turtle set to accumulate the amount of cancer cells neighbors as the cells travel (in go function)
+t-ns
+  ;measures the amount of neighbors around t-cells specifically
+  ;uses turtle set to accumulate the amount of neighbors as the ts cells travel (in go function)
+unique-interactions-cs
+  ;measures the amount of unique interactions cancer cells have
+unique-interactions-ts
+  ;measures the amount of unique interactions t-cells have
+unique-patches-visited
+;measurs the amount of unique patches visited (helps validate data and experiments run - instituted for the fact that more interactions with lower tp]
+]
+
+to setup
+  clear-all
+  ;has to clear the simulation before setting it up - makes sure data or runs prior does not affect it
+
+  let total-ratio t-ratio + c-ratio
+  ;makes total ratio, the addition of what t-ratio and c-ratio is set to be
+  ;this will help when getting the number of t-cells seen below
+  set num-ts (total-cells / total-ratio) * t-ratio
+  ;num-ts basically represents the total number of t-cells there will be
+  ;it divides the total-cells (slider on interface) by the total ratio and then multiplies it by the t ratio
+  set num-cs (total-cells / total-ratio) * c-ratio
+  ;num-cs represents the total number of c-cells there is
+  ;same logic as the above num-ts
+  ask n-of num-ts patches with [not any? turtles-here] [
+    ;n-of num-ts represents selecting a subset of num-ts agents (number is found by the chosen t-ratio and c-ratio in the interface)/the patches you want to choose and eventually sprout cells
+    ;patches with [not any? turtles-here] sets a condition that ts can not be sprouted on any patches with cells already in it
+   sprout-ts 1 [
+      ;sprouts t-cell on empty patch (max number sprout is set with n-of num-ts)
+  set shape "circle"
+  set color blue
+  set size 1
+      ;sets cells to be blue to differentiate from cancer cells (which is red)
+    ]
+    ;end of descriptions about t-cells
+  ]
+  ;end of ask n-of statement
+
+  ask n-of num-cs patches with [not any? turtles-here] [
+    ;same logic as num-ts
+    ;condition of new agents can not be sprouted on any patches with cells already in it
+   sprout-cs 1 [
+      ;sprouts 1 agent/c-cell on empty patch
+  set shape "circle"
+  set color red
+  set size 1
+      ;sets cells to be red to differentiate between t-cells (which is blue)
+    ]
+    ;end of description for c-cells
+  ]
+  ;end of n-of statement
+
+  set meeting-count 0
+  ;each time setup is clicked, meeting count has to be reverted back to 0 --> makes sure data is accurate, and runs are not affected by past runs (prior to setup)
+  ask turtles [
+    set c-ns (cs-on neighbors)
+    ;setting c-ns to be the amount of cancer cells on neighbors (used for unique interactions)
+    set t-ns (ts-on neighbors)
+    ;setting t-ns to be the amount of t-cells on neighbors (used for unique interactions)
+    pen-down
+    ;tracks the path of each turtle
+    set unique-patches-visited no-patches
+    ;due to unique-patches-visited, the list cant have 0 in it otherwise it will be an error, instead initialize it with no-patches so it does not start with 0 and recieve an error due to patch-set 0 patch-here being impossible to do
+  ]
+
+ reset-ticks
+end
+
+
+to go
+  ask turtles [move-p]
+  ;move-p function is defined below, represents persistent movement + use of move probability and turn probability parameters
+
+  ask turtles [
+    let other-turtles other turtles-on neighbors
+    ;makes other-turtles all the other turtles on one of the residing neighbors
+    set meeting-count (meeting-count + count other turtles-on neighbors)
+    ;accumulates meeting count to be meeting count + the amount of turtles on neighbors 
+    ;measures interaction count for all cells
+    set interaction-count-ts (interaction-count-ts + count ts-on neighbors)
+    ;measures meeting count for just t-cells by counting the amount of t-cells on the neighbors and adding that to interaction-count-ts
+    set interaction-count-cs (interaction-count-cs + count cs-on neighbors)
+    ;measures meeting count for just c-cells by counting the amount of c-cells on the neighbors and adding that to interaction-count-cs
+    set c-ns (turtle-set c-ns cs-on neighbors)
+    ;sets c-ns to be the amount of cancer cells on neighbors
+    ;different from interacton count because turtle set finds the new values (creates an agentset containing unique turtles from various inputs/individual turtles) and takes away duplicates
+    set t-ns (turtle-set t-ns ts-on neighbors)
+    ;different from interaction count because turtle set finds unique values/unique t-cells on neighbors rather than counting the same interaction
+    set unique-interactions-cs count c-ns
+    ;sets unique-interactions of cancer cells to the cancer cells on neighbors (with no duplicates)
+    set unique-interactions-ts count t-ns
+    ;sets unique-interactions of t-cells to the cancer cells on neighbors (with no duplicates)
+    set unique-patches-visited (patch-set unique-patches-visited patch-here)
+    ;sets the variable of unique-patches-visited to the patch-set (so finds unique patches in the list by removing duplicates) and accumulating it with unique-patches-viisted with the current patch to get the accumulation of unique-patches-visited
+
+    ]
+    tick
+  ;creates a tick for each go run
+end
+;ends go function
+
+to move
+  let free-neighbors neighbors with [not any? turtles-here]
+  ;free-neighbors --> sets it as neighbors with no turtles here
+  if any? free-neighbors [
+    ;if-else statement for if there are free-neighbors
+    let target-patch one-of free-neighbors
+    ;creates a target patch of one of these free neighbors
+    move-to target-patch
+    ;moves to the target-patch
+    ]
+
+end
+;end of move function (not being used due to persistent movement)
+
+to see-free-neighbors
+  ask turtles [
+    let free-neighbors patches in-radius 1 with [count turtles-here = 0]
+  ask free-neighbors [set pcolor green]
+  ]
+;neighbors with no turtles in patches of radius 1 should be green after clicking the button
+  
+end
+;end of see-free-neighbors function
+
+to move-p
+  if random 100 < mp [
+    ;a random number is less than the move probability given --> if mp is 0, there can be no number less than mp, if mp is 50, there is a 50% chance that random 100 is less than mp
+    ;if else statement due to if random 100 is essentially less than mp
+    ifelse random 100 < tp [
+      ;another if statement to check if the tp parameters are true - same logic as mp
+      let free-neighbors neighbors with [not any? turtles-here]
+      ;sets free-neighbors as empty neighbors (with no turtles)
+      let exclude-patch patch-ahead 1
+      ;excludes the patch of one patch-ahead 1
+      set free-neighbors free-neighbors who-are-not exclude-patch
+      ;sets free-neighbors empty neighbors who are not the patch ahead 1
+      if any? free-neighbors [
+        let target-patch one-of free-neighbors
+        move-to target-patch
+        ;if there are free-neighbors, let target patch be one of them and move to them
+      ]
+      ;end of if-else statement of free-neighbors
+    ]
+    ;end of if-else statement of tp parameter
+
+    [
+      ifelse count turtles-on patch-ahead 1 = 0 [
+      ;if the patch-ahead 1 is 0 meaning there are no turtles
+      move-to patch-ahead 1
+      ;have the turtle move to patch ahead 1
+    ]
+    ;end of if statement of count-turtles on patch-ahead 1 (if there are no turtles on patch-ahead 1)
+    [
+      ;if if-else statement is not true (meaning there is a turtle on patch-ahead 1)
+        let target-patch (patch-set patch-right-and-ahead 45 1 patch-left-and-ahead 45 1)
+        set target-patch target-patch with [count turtles-here = 0]
+      ;sets the target patch to be patches right of 45 degrees, and left of 45 degrees - sets target patch to be any target patch with no turtles in it
+        if count target-patch > 0 [
+        ;if the count of the target patch is not 0, meaning there is an empty target patch right and 45, and left and 45, then move to one of them
+           move-to one-of target-patch
+        ]
+      ;end of the if there are target patches
+    ]
+    ;end of the if there are no turtles on the patch-ahead 1
+    ]
+  ;end of the else statement
+  ]
+;end of of if else statement of if random 100<mp
+;the second part of if count-turtles on patch-ahead 1 = 0 and move to it does not affect tp due to this being under the if/else statement of the mp parameter - if random 100 were to be greater than mp then none of the code would run
+end
