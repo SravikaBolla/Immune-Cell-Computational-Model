@@ -8,6 +8,8 @@ Patch Cancer Cells
 
 Density-Factor = 100 of Cancer Cell Patch
 
-[Screen Recording 2026-06-10 at 12.40.40 AM (1).mov.zip](https://github.com/user-attachments/files/30230529/Screen.Recording.2026-06-10.at.12.40.40.AM.1.mov.zip)
+<img width="1287" height="642" alt="Screenshot 2026-07-21 at 10 07 42 AM" src="https://github.com/user-attachments/assets/cc98e421-fa27-443b-9e24-81052a6dfaff" />
 
+Video of Cancer Cell Patch with T-Cells Running:
+[Screen Recording 2026-06-10 at 12.40.40 AM (1).mov.zip](https://github.com/user-attachments/files/30230529/Screen.Recording.2026-06-10.at.12.40.40.AM.1.mov.zip)
 
