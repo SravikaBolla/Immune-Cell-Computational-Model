@@ -3,8 +3,10 @@ breed [ts t]
 breed [cs c]
 ;;creates c-cells
 
-globals [meeting-count]
+globals [meeting-count
 ;global variables (meeting count which represents the amount of interactions cs and ts have)
+tumor-x
+tumor-y]
 turtles-own [
 interaction-count-ts
   ;;the amount of interactions t-cells have (blue cells have)
@@ -22,11 +24,15 @@ unique-interactions-ts
   ;measures the amount of unique interactions t-cells have
 unique-patches-visited
 ;measurs the amount of unique patches visited (helps validate data and experiments run - instituted for the fact that more interactions with lower tp]
-]
+mp
+tp
+dr]
+cs-own [hits]
 
 to setup
   clear-all
   ;has to clear the simulation before setting it up - makes sure data or runs prior does not affect it
+
 
   let total-ratio t-ratio + c-ratio
   ;makes total ratio, the addition of what t-ratio and c-ratio is set to be
@@ -45,7 +51,10 @@ to setup
   set shape "circle"
   set color blue
   set size 1
-      ;sets cells to be blue to differentiate from cancer cells (which is red)
+  set mp  t-mp
+      ;sets mp for just t-cells rather than affecting both c-cells and t-cells
+  set tp t-tp
+    ; sets tp for just t-cells rather than affecting both c-cells and t-cells
     ]
     ;end of descriptions about t-cells
   ]
@@ -60,6 +69,11 @@ to setup
   set color red
   set size 1
       ;sets cells to be red to differentiate between t-cells (which is blue)
+  set mp c-mp
+      ;sets mp for just c-cells rather than all turtles
+  set tp c-tp
+      ;sets tp for just c-cells rather than all turtles
+  set hits 0
     ]
     ;end of description for c-cells
   ]
@@ -83,6 +97,7 @@ end
 
 
 to go
+
   ask turtles [move-p]
   ;move-p function is defined below, represents persistent movement + use of move probability and turn probability parameters
 
@@ -90,7 +105,7 @@ to go
     let other-turtles other turtles-on neighbors
     ;makes other-turtles all the other turtles on one of the residing neighbors
     set meeting-count (meeting-count + count other turtles-on neighbors)
-    ;accumulates meeting count to be meeting count + the amount of turtles on neighbors 
+    ;accumulates meeting count to be meeting count + the amount of turtles on neighbors
     ;measures interaction count for all cells
     set interaction-count-ts (interaction-count-ts + count ts-on neighbors)
     ;measures meeting count for just t-cells by counting the amount of t-cells on the neighbors and adding that to interaction-count-ts
@@ -107,10 +122,13 @@ to go
     ;sets unique-interactions of t-cells to the cancer cells on neighbors (with no duplicates)
     set unique-patches-visited (patch-set unique-patches-visited patch-here)
     ;sets the variable of unique-patches-visited to the patch-set (so finds unique patches in the list by removing duplicates) and accumulating it with unique-patches-viisted with the current patch to get the accumulation of unique-patches-visited
-
     ]
     tick
   ;creates a tick for each go run
+
+ask ts [kill-cancer-cells]
+ask cs [set label hits]
+
 end
 ;ends go function
 
@@ -134,40 +152,51 @@ to see-free-neighbors
   ask free-neighbors [set pcolor green]
   ]
 ;neighbors with no turtles in patches of radius 1 should be green after clicking the button
-  
+
 end
 ;end of see-free-neighbors function
 
+to kill-cancer-cells
+    let target one-of cs in-radius 1
+   if target != nobody [
+      ask target [
+        set hits hits + 1
+        if hits = 5 [
+      die
+        ]
+    ]
+  ]
+end
+
 to move-p
   if random 100 < mp [
+     let free-neighbors neighbors with [not any? turtles-here]
     ;a random number is less than the move probability given --> if mp is 0, there can be no number less than mp, if mp is 50, there is a 50% chance that random 100 is less than mp
     ;if else statement due to if random 100 is essentially less than mp
     ifelse random 100 < tp [
       ;another if statement to check if the tp parameters are true - same logic as mp
-      let free-neighbors neighbors with [not any? turtles-here]
       ;sets free-neighbors as empty neighbors (with no turtles)
       let exclude-patch patch-ahead 1
-      ;excludes the patch of one patch-ahead 1
-      set free-neighbors free-neighbors who-are-not exclude-patch
-      ;sets free-neighbors empty neighbors who are not the patch ahead 1
-      if any? free-neighbors [
-        let target-patch one-of free-neighbors
-        move-to target-patch
-        ;if there are free-neighbors, let target patch be one of them and move to them
-      ]
-      ;end of if-else statement of free-neighbors
-    ]
-    ;end of if-else statement of tp parameter
+      let free-neighbors2 free-neighbors who-are-not exclude-patch
+      if any? free-neighbors2 [
+        if any? cs [
+        let nearest-cancer-cs min-one-of cs [distance myself]
+        let target-patch min-one-of free-neighbors2 [distance nearest-cancer-cs]
+          move-to target-patch
 
-    [
-      ifelse count turtles-on patch-ahead 1 = 0 [
+
+      ]
+      ]
+
+    ]
+    [ifelse count turtles-on patch-ahead 1 = 0 [
       ;if the patch-ahead 1 is 0 meaning there are no turtles
       move-to patch-ahead 1
       ;have the turtle move to patch ahead 1
     ]
     ;end of if statement of count-turtles on patch-ahead 1 (if there are no turtles on patch-ahead 1)
-    [
-      ;if if-else statement is not true (meaning there is a turtle on patch-ahead 1)
+
+      [
         let target-patch (patch-set patch-right-and-ahead 45 1 patch-left-and-ahead 45 1)
         set target-patch target-patch with [count turtles-here = 0]
       ;sets the target patch to be patches right of 45 degrees, and left of 45 degrees - sets target patch to be any target patch with no turtles in it
@@ -177,10 +206,72 @@ to move-p
         ]
       ;end of the if there are target patches
     ]
+
     ;end of the if there are no turtles on the patch-ahead 1
+; let exclude-patch patch-ahead 1
+      ;excludes the patch of one patch-ahead 1
+      ; let free-neighbors2 free-neighbors who-are-not exclude-patch
+      ;sets free-neighbors empty neighbors who are not the patch ahead 1
+      ; if any? cs and any? free-neighbors [
+        ; let nearest-cancer-cs min-one-of cs [distance myself]
+        ; let target-patch min-one-of free-neighbors2 [distance nearest-cancer-cs]
+         ; move-to target-patch
     ]
-  ;end of the else statement
-  ]
+      ;end of if-else statement of cs-free-neighbors
+    ]
+
+
 ;end of of if else statement of if random 100<mp
 ;the second part of if count-turtles on patch-ahead 1 = 0 and move to it does not affect tp due to this being under the if/else statement of the mp parameter - if random 100 were to be greater than mp then none of the code would run
+end
+
+
+to patch-c-cells
+  clear-all
+  set tumor-x 0
+  ;sets the variable tumor-x to x-coordinate 0
+  set tumor-y 0
+  ;sets the variable tumor-y to y-coordinate 0
+
+
+let tumor-patches patches with [not any? turtles-here and distancexy tumor-x tumor-y < cluster-radius]
+;declares a local variable tumor-patches
+;declares tumor-patches to be emtpy patches and finds the distance from the tumor-x tumor y (the random coordinates) has to be less than the cluster-radius
+;the cluster radius is a slider --> if the cluster radius is 1 then the patches sprouted has to be have a distance less than 1
+let spawn-count (count tumor-patches with [random 100 < density-factor])
+  ;let spawn-count min list num-cs count spawning-patches
+;declares a local variable spawn-count
+;spawn-count stores how many cancer cells are spawned
+;min list finds the smaller number (if there can only be 2 turtles spawned in a radius of 1, then only 2 c-cells will be spawned)
+;the min list is one number of num-cs and the other of count tumor-patches
+;makes sure that netlogo doesn't crash
+ask n-of spawn-count tumor-patches[
+   sprout-cs 1 [
+     set shape "circle"
+  set color red
+  set size 1
+  set mp c-mp
+  set tp c-tp
+    ]
+  ]
+
+  ask n-of num-ts patches with [not any? turtles-here] [
+   sprout-ts 1 [
+  set shape "circle"
+  set color blue
+  set size 1
+  set mp  t-mp
+  set tp t-tp
+    ]
+  ]
+
+  set meeting-count 0
+  ask turtles [
+    set c-ns (cs-on neighbors)
+    set t-ns (ts-on neighbors)
+    pen-down
+    set unique-patches-visited no-patches
+  ]
+
+ reset-ticks
 end
