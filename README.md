@@ -23,6 +23,9 @@ Density Factor = 50 of Cancer Cell Patch:
 Video of Cancer Cell Patch with T-Cells Running:
 [Screen Recording 2026-06-10 at 12.41.15 AM.mov.zip](https://github.com/user-attachments/files/30230608/Screen.Recording.2026-06-10.at.12.41.15.AM.mov.zip)
 
+T-Cells Killing Cancer Cells:
+[Screen Recording 2026-06-10 at 1.58.58 AM.mov.zip](https://github.com/user-attachments/files/30230927/Screen.Recording.2026-06-10.at.1.58.58.AM.mov.zip)
+
 
 
 
